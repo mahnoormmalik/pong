@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script>
+  // code goes here
+
+  $(document).ready(()=> {
+    var diff = 0;
+    // player clicks on 1 player game
+
+    var onePlayer = $(".main-menu > li:first-child")
+    var gameBox = $(".game-box > *")
+    var gameWindow = $("section");
+    var leftBarNewHeight;
+    onePlayer.click(()=> {
+        renderOnePlayerPage();
+    });
+    var turn = 0;
+    var xSpeed = -10;
+    var ySpeed = 7;
+    function renderOnePlayerPage() {
+      gameBox.hide(()=> {
+        gameWindow.html("<h1>ONE PLAYER INSTRUCTIONS</h1>")
+        gameWindow.append("<h1>Choose your control type</h1>")
+        gameWindow.append("<ul class='menu'></ul>")
+        $("section > ul").append("<li>Mouse</li>");
+        $("section > ul").append("<li>KeyBoard</li>");
+        var mouseOption = $(".menu li:first-child");
+        var KeyBoardOption = $(".menu li:last-child");
+        KeyBoardOption.click(()=>{
+          renderOnePlayerKeyBoardPage();
+        })
+        mouseOption.click(()=>{
+          renderOnePlayerMousePage(); //returns control type and difficulty 1 being easiest, 3 being hardest
+        });
+      })
+
+    }
+    function renderOnePlayerKeyBoardPage() {
+      gameBox.hide(() =>{
+        gameWindow.html("<h1>ONE PLAYER INSTRUCTIONS</h1>");
+        gameWindow.append("<p>Control the paddle on the right hand side of the screen using your Key Board. Use up arrow key to move the paddle up and down arrow key to move the paddle down.</p>");
+        gameWindow.append("<p>Points are scored when your opponent misses the ball. First player to reach 10 points wins the game</p>")
+        gameWindow.append("<ul class='menu'></ul>")
+        $("section > ul").append("<li>Continue</li>");
+        $("ul > li").click(()=>{
+          $(".game-box > *").hide(()=>{
+            renderDifficultyPage("KeyBoard");
+          })
+        })
+      })
+    }
+    var top = 50;
+    var left = 275;
+    function renderOnePlayerMousePage() {
+      gameBox.hide(() =>{
+        gameWindow.html("<h1>ONE PLAYER INSTRUCTIONS</h1>")
+        gameWindow.append("<p>Control the paddle on the right hand side of the screen using your mouse. The paddle can be moved up and down.</p>");
+        gameWindow.append("<p>Points are scored when your opponent misses the ball. First player to reach 10 points wins the game</p>")
+        gameWindow.append("<ul class='menu'></ul>")
+        $("section > ul").append("<li>Continue</li>");
+        $(".menu li").click(()=> {
+          $(".game-box > *").hide(()=>{
+            renderDifficultyPage("Mouse")
+          });
+        });
+      });
+
+    }
+
+    function renderDifficultyPage(inputType){
+        gameWindow.html("<h1>ONE PLAYER INSTRUCTIONS</h1>");
+        gameWindow.append("<p class='par'>Input Type:</p>");
+        gameWindow.append("<p class='par'>"+inputType+"</P>");
+        gameWindow.append("<p class='par'>Choose your difficulty level:</p>");
+        gameWindow.append("<ul class='menu'></ul>")
+        $("section > ul").append("<li>BEGINNER</li>");
+        $("section > ul").append("<li>INTERMEDIATE</li>");
+        $("section > ul").append("<li>EXPERT</li>");
+        gameWindow.append("<h1>GOOD LUCK!</h1>");
+
+        $(".menu > li:first-child").click(()=>{
+          diff = 1;
+          renderGame(inputType);
+        });
+        $(".menu > li:nth-child(2)").click(()=>{
+          diff = 2;
+          renderGame(inputType);
+        })
+        $(".menu > li:last-child").click(()=>{
+          diff = 3;
+          renderGame(inputType);
+        })
+
+      }
+
+    function renderGame(inputType) {
+      $("section > *").hide(()=>{
+        var gameWindow = $("section");
+        gameWindow.html("<p class='heading-font left'>0</p>")
+        gameWindow.append("<p class='heading-font right'>0</p>")
+        gameWindow.append("<div class='left rectangle'></div>")
+        gameWindow.append("<div class = 'divider'></div>")
+        gameWindow.append("<div class = 'ball'></div>")
+        gameWindow.append("<div class='right rectangle'></div>")
+        var ball = $(".ball");
+        var leftBar = $("div.left")
+        if(inputType === "Mouse"){
+          $("body").mousemove((event) =>{
+            var y = event.pageY;
+            if ((y-150) >= -45 && (y-150) <= 360) {
+              $("div.right").css("top", (y-150));
+            }
+          })
+          gameWindow.css("cursor", 'none')
+        } else if(inputType === "KeyBoard"){
+          var keysPressed = [false, false];
+          $("body").keydown((event) => {
+            if(event.which === 38){
+              keysPressed[0] = true;
+            } else if(event.which === 40){
+              keysPressed[1] = true;
+            }
+          })
+          $("body").keyup((event)=>{
+            if(event.which === 38){
+              keysPressed[0] = false;
+            } else if(event.which === 40){
+              keysPressed[1] = false;
+            }
+          })
+          var rightBar = $("div.right")
+          var top = parseInt(rightBar.css("top"));
+          var speed = 2;
+          function updateKeys(){
+            if(keysPressed[0]){
+              if(top-speed < -46){
+                top = -46
+              } else {
+                top -= speed;
+              }
+            } else if(keysPressed[1]){
+              if(top+speed > 360){
+                top = 360;
+              } else {
+                top += speed;
+              }
+            }
+            rightBar.css("top", top)
+          }
+          setInterval(updateKeys, 2)
+        }
+        animateBall();
+      });
+    };
+
+
+    function updateLeftBar(vX, vY, ball, BallTop, isFirstBall){
+      var barSpeed = 0;
+      var topDisplacement = 0;
+      var leftWidth = 580;
+      if(isFirstBall){
+        leftWidth = 310;
+      }
+      var ballInitialTop = BallTop;
+      var time = Math.abs(leftWidth/vX);
+      var top = Math.abs(time*vY)+10
+      if(vY < 0){
+        var windowHeight = BallTop + 46 + 10;
+        if(top > windowHeight) {
+          top = top - windowHeight - 30;
+          // console.log("top absolute", top)
+        } else {
+          top = windowHeight - top;
+        }
+        top = -46 + top - 40;
+        // console.log("actual top", top)
+      } else {
+        var windowHeight = Math.abs(480 - BallTop + 10)
+        if(top > windowHeight){
+          top = Math.abs(top - windowHeight);
+          top = 480 - top -80 - 46 - 30;
+        } else {
+          top = ballInitialTop -46 + top-30;
+        }
+      }
+      if(top < -46){
+        top = -46;
+      } else if(top > 359){
+        top = 359;
+      }
+
+      if(diff === 1){
+        barSpeed = 3.5;
+      } else if(diff === 2){
+        barSpeed = 4.5;
+      } else if(diff === 3){
+        barSpeed = 6.5;
+        // var difference
+        // var i = setInterval(()=>{
+        //
+        //   if(parseInt(ball.css("top")) > -47 && parseInt(ball.css("top")) < 415){
+        //     difference = parseInt($("div.left").css("top")) - parseInt(ball.css("top"));
+        //     // if(difference > 5){
+        //     //   difference = 10;
+        //     // } else if(difference < -5){
+        //     //   difference = -5;
+        //     // }
+        //     topDisplacement = parseInt(ball.css("top")) - 30;
+        //     console.log("topDisplacement", topDisplacement)
+        //     if(topDisplacement < -46){
+        //       topDisplacement = -46;
+        //     } else if(topDisplacement > 360){
+        //       // console.log("topDisplacement", topDisplacement)
+        //       topDisplacement = 360;
+        //     }
+        //     $("div.left").css("top", topDisplacement);
+        //   }
+        //
+        // }, 30)
+      }
+      //animates left bar to come to right position
+      var i = setInterval(()=>{
+        if(top < parseInt($("div.left").css("top"))){ //if paddle needs to move upwards
+          topDisplacement = parseInt($("div.left").css("top")) - (barSpeed+1.5*(Math.abs(ySpeed)/10)); //new displacement adjusted according to balls speed
+          $("div.left").css("top", topDisplacement);
+          if(top >= parseInt($("div.left").css("top"))){
+            clearInterval(i);
+          }
+        } else if(top >= parseInt($("div.left").css("top"))){ //if paddle needs to move downwards
+          topDisplacement = parseInt($("div.left").css("top")) + (barSpeed+1.5*(Math.abs(ySpeed)/10)); //new displacement adjusted according to balls speed
+          $("div.left").css("top", topDisplacement);
+          if(top < parseInt($("div.left").css("top"))){
+            clearInterval(i);
+          }
+        }
+      }, 20)
+    }
+
+
+
+    function animateBall(){
+      var ball = $(".ball");
+      var leftBar = $("div.left");
+      var rightBar = $("div.right");
+
+      ball.css({
+        "display": "none",
+        "top"    : "50px",  //initial ball position on game start
+        "left"   : "275px"
+      })
+      var BallTop = parseInt(ball.css("top"))
+
+      if(xSpeed < 0){ //if ball is travelling towards computer pad update left pad position accordingly
+        updateLeftBar(xSpeed, ySpeed, ball, BallTop, true)
+      }
+      ball.css("display", "inline");
+      var leftDisplacement, topDisplacement;
+
+
+      //main game loop
+      var interID = setInterval(()=>{
+        leftDisplacement = parseInt(ball.css("left")) + xSpeed;
+        topDisplacement = parseInt(ball.css("top")) + ySpeed;
+        ball.css({
+          "left": leftDisplacement,
+          "top": topDisplacement});
+        //moves computer bar in the y-direction of ball when its oponents turn- as in the original game
+        if(xSpeed > 0){
+          topDisplacement = parseInt(leftBar.css("top")) + ySpeed;
+          //check if topDisplacement is outside game window
+          if(topDisplacement > 359){
+            topDisplacement = 359
+          } else if(topDisplacement < -46){
+            topDisplacement = -46
+          }
+          leftBar.css("top", topDisplacement);
+        }
+
+
+        testCollision(ball, leftBar, rightBar, interID) //tests if ball is colliding with the paddle or the sides
+      }, 20);
+    }
+
+
+    function testCollision(ball, leftBar, rightBar, interID){
+      var leftDisplacement, topDisplacement;
+      var difference = 0;
+      var ballTop = ball.position().top
+      var ballLeft = ball.position().left
+      if(ballTop !== 0 && ballLeft!== 0 && leftBar.position().top !== 0 && leftBar.position().left!= 0){
+        if((ball.position().top +20 > leftBar.position().top) && (ball.position().top + 20 < leftBar.position().top + 90) && (ballLeft < leftBar.position().left +30) && ballLeft > leftBar.position().left+10){
+          difference = (leftBar.position().top + (75/2)) - (ballTop +10);
+          // console.log("difference", difference)
+          xSpeed = 10+ 3*(difference/47.5);
+          if(difference > 0){
+            ySpeed = 10*(difference/47.5)
+            if(ySpeed > 0){
+              ySpeed = -ySpeed;
+            }
+          } else if (difference < 0){
+            ySpeed = 10*(difference/47.5)
+            if(ySpeed < 0){
+              ySpeed = -ySpeed;
+            }
+          }
+          leftDisplacement = parseInt(ball.css("left")) + (xSpeed*2);
+          topDisplacement = parseInt(ball.css("top")) + (ySpeed*2);
+          ball.css({
+            "left": leftDisplacement,
+            "top": topDisplacement
+          })
+          // console.log("xSpeed", xSpeed);
+          // console.log("ySpeed", ySpeed);
+        }
+        if((ballTop > rightBar.position().top - 20) && (ballTop + 20 < rightBar.position().top + 90) && (ballLeft > rightBar.position().left - 22) &&(ballLeft  < rightBar.position().left)){
+          difference = (rightBar.position().top +(75/2)) - (ballTop +10);
+          // console.log("diffeerence", difference)
+          xSpeed = -xSpeed;
+          xSpeed = -10+3*(difference/47.5);
+          ySpeed = 10*(difference/47.5);
+          if(ySpeed > 8){
+            ySpeed = 8;
+          }
+          if(difference > 0){
+            if(ySpeed > 0){
+              ySpeed = -ySpeed;;
+            }
+          } else if (difference < 0){
+            if(ySpeed < 0){
+              ySpeed = -ySpeed;
+            }
+          }
+          var ballTop = parseInt(ball.css("top"))
+          updateLeftBar(xSpeed, ySpeed, ball, ballTop, false);
+          leftDisplacement = parseInt(ball.css("left")) + (xSpeed*2);
+          topDisplacement = parseInt(ball.css("top")) + (ySpeed*2);
+          ball.css({
+            "left": leftDisplacement,
+            "top": topDisplacement
+          })
+          // console.log("ySpeed", ySpeed);
+          // console.log("xSpeed", xSpeed);
+        }
+        if(parseInt(ball.css("left")) <  -50 || parseInt(ball.css("left")) > 630){
+          clearInterval(interID)
+          ball.stop()
+          var leftScore = $("p.left");
+          var rightScore = $("p.right");
+          if(parseInt(ball.css("left")) <  -50){
+            xSpeed = 10;
+            ySpeed = 7;
+            rightScore.text((Number(rightScore.text())+1).toString())
+          } else if(parseInt(ball.css("left")) > 630){
+            xSpeed = -10;
+            ySpeed = 7;
+            leftScore.text((Number(leftScore.text())+1).toString())
+          }
+          if(Number(leftScore.text()) === 10){
+            leftScore.text("You Win");
+            rightScore.text("You Lose");
+          } else if(Number(rightScore.text()) === 10){
+            rightScore.text("You Win");
+            leftScore.text("You Lose");
+          } else {
+            setTimeout(function(){
+              animateBall()
+            }, 1000);
+
+          }
+        }
+        if(ball.position().top < gameWindow.position().top){
+          ySpeed = -ySpeed;
+          leftDisplacement = parseInt(ball.css("left")) + (xSpeed*2);
+          topDisplacement = parseInt(ball.css("top")) + (ySpeed*2);
+          ball.css({
+            "left": leftDisplacement,
+            "top": topDisplacement
+          })
+        } else if(ball.position().top > gameWindow.position().top + 460 ){
+          ySpeed = -ySpeed;
+          leftDisplacement = parseInt(ball.css("left")) + (xSpeed*2);
+          topDisplacement = parseInt(ball.css("top")) + (ySpeed*2);
+          ball.css({
+            "left": leftDisplacement,
+            "top": topDisplacement
+          })
+        }
+      }
+    }
+  });
+
+
+  </script>
+  <link rel="stylesheet" type="text/css" href="css/styles.css">
+  <meta name="viewport" content= "width=device-width, initial-scale= 1.0">
+</head>
+
+<body class = "noselect">
+  <h1>Pong Game</h1>
+  <section class = "game-box">
+    <header>PONG</header>
+    <ul class = "main-menu">
+      <li>1 Player</li>
+      <li>2 Player</li>
+      <li>Demo Modes</li>
+      <li>High Scores</li>
+    </ul>
+  </section>
+</body>
